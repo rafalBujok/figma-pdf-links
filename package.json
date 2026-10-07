@@ -1,0 +1,13 @@
+{
+  "name": "figma-pdf-links",
+  "version": "1.0.0",
+  "description": "Figma plugin: clickable links on any element in exported PDFs",
+  "scripts": {
+    "build": "node build.mjs"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "pdf-lib": "^1.17.1"
+  },
+  "private": true
+}

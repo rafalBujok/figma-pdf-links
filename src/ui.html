@@ -1,0 +1,140 @@
+<style>
+  body { font: 12px Inter, system-ui, sans-serif; margin: 0; padding: 12px;
+         color: var(--figma-color-text); background: var(--figma-color-bg); }
+  h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
+       color: var(--figma-color-text-secondary); margin: 14px 0 6px; }
+  input { width: 100%; box-sizing: border-box; padding: 7px 8px; border-radius: 4px;
+          border: 1px solid var(--figma-color-border); background: var(--figma-color-bg);
+          color: var(--figma-color-text); font: inherit; }
+  .row { display: flex; gap: 6px; margin-top: 6px; }
+  button { flex: 1; padding: 7px; border-radius: 4px; border: 1px solid var(--figma-color-border);
+           background: var(--figma-color-bg); color: var(--figma-color-text); cursor: pointer; font: inherit; }
+  button.primary { background: var(--figma-color-bg-brand); color: var(--figma-color-text-onbrand); border: 0; }
+  button:disabled { opacity: .5; cursor: default; }
+  #info { color: var(--figma-color-text-secondary); margin-bottom: 6px; }
+  ul { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow: auto; }
+  li { padding: 5px 6px; border-radius: 4px; cursor: pointer; display: flex; flex-direction: column; }
+  li:hover { background: var(--figma-color-bg-hover); }
+  li small { color: var(--figma-color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .hint { color: var(--figma-color-text-secondary); margin-top: 6px; }
+</style>
+
+<div id="info">Select an element</div>
+<input id="url" placeholder="https://… / mailto:… / tel:…" />
+<div class="row">
+  <button id="set" class="primary">Set link</button>
+  <button id="remove">Remove</button>
+</div>
+
+<h3>Links on this page</h3>
+<ul id="list"></ul>
+
+<h3>Export</h3>
+<button id="export" class="primary" style="width:100%">Export PDF with links</button>
+<div class="hint">Exports the selected frames, or every frame on the page if nothing is selected (one PDF page per frame).</div>
+
+<!-- pdf-lib is inlined here by build.mjs, so the plugin needs no network access -->
+<script>/*PDF_LIB*/</script>
+<script>
+  const $ = id => document.getElementById(id);
+  const post = msg => parent.postMessage({ pluginMessage: msg }, '*');
+
+  $('set').onclick = () => post({ type: 'set-link', url: $('url').value });
+  $('remove').onclick = () => post({ type: 'remove-link' });
+  $('url').onkeydown = e => { if (e.key === 'Enter') $('set').click(); };
+  $('export').onclick = () => {
+    $('export').disabled = true;
+    $('export').textContent = 'Exporting…';
+    post({ type: 'export' });
+  };
+
+  function resetExportButton() {
+    $('export').disabled = false;
+    $('export').textContent = 'Export PDF with links';
+  }
+
+  // Merge the per-frame PDFs into one document and add a link annotation for each linked node
+  async function buildPdf(pages) {
+    const { PDFDocument, PDFString } = PDFLib;
+    const out = await PDFDocument.create();
+
+    for (const p of pages) {
+      const src = await PDFDocument.load(p.bytes);
+      const copied = await out.copyPages(src, src.getPageIndices());
+      for (const page of copied) {
+        out.addPage(page);
+        const box = page.getMediaBox();
+        const scale = box.width / p.width; // in case the export is not 1px = 1pt
+
+        for (const l of p.links) {
+          // Figma: origin top-left, Y points down. PDF: origin bottom-left, Y points up.
+          let x1 = box.x + l.x * scale;
+          let x2 = box.x + (l.x + l.w) * scale;
+          let y2 = box.y + box.height - l.y * scale;
+          let y1 = box.y + box.height - (l.y + l.h) * scale;
+          // Clip to the page
+          x1 = Math.max(x1, box.x); y1 = Math.max(y1, box.y);
+          x2 = Math.min(x2, box.x + box.width); y2 = Math.min(y2, box.y + box.height);
+          if (x2 <= x1 || y2 <= y1) continue;
+
+          const annot = out.context.obj({
+            Type: 'Annot',
+            Subtype: 'Link',
+            Rect: [x1, y1, x2, y2],
+            Border: [0, 0, 0], // invisible – no box drawn around the link
+            A: { Type: 'Action', S: 'URI', URI: PDFString.of(l.url) },
+          });
+          page.node.addAnnot(out.context.register(annot));
+        }
+      }
+    }
+    return out.save();
+  }
+
+  function download(bytes, name) {
+    const blob = new Blob([bytes], { type: 'application/pdf' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = name.replace(/[\\/:*?"<>|]/g, '_') + '.pdf';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(() => URL.revokeObjectURL(a.href), 2000);
+  }
+
+  onmessage = async e => {
+    const msg = e.data.pluginMessage;
+    if (!msg) return;
+
+    if (msg.type === 'state') {
+      $('info').textContent = msg.selectionCount
+        ? `Selected: ${msg.selectionCount}` + (msg.currentLink ? ' · has link' : '')
+        : 'Select an element to add a link';
+      // Don't overwrite the field while the user is typing in it
+      if (document.activeElement !== $('url')) $('url').value = msg.currentLink || '';
+      $('list').innerHTML = msg.linked.length ? '' : '<li><small>No links yet</small></li>';
+      for (const l of msg.linked) {
+        const li = document.createElement('li');
+        li.innerHTML = '<span></span><small></small>';
+        li.children[0].textContent = l.name;
+        li.children[1].textContent = l.url;
+        li.onclick = () => post({ type: 'select-node', id: l.id });
+        $('list').appendChild(li);
+      }
+    }
+
+    if (msg.type === 'build-pdf') {
+      try {
+        const bytes = await buildPdf(msg.pages);
+        download(bytes, msg.fileName);
+        const n = msg.pages.reduce((s, p) => s + p.links.length, 0);
+        post({ type: 'notify', text: `Done: ${msg.pages.length} page(s), ${n} link(s).` });
+      } catch (err) {
+        post({ type: 'notify', text: 'PDF error: ' + err.message, error: true });
+      }
+      resetExportButton();
+    }
+
+    if (msg.type === 'export-done') resetExportButton();
+  };
+</script>

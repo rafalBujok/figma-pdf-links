@@ -1,37 +1,202 @@
 <style>
-  body { font: 12px Inter, system-ui, sans-serif; margin: 0; padding: 12px;
+  * { box-sizing: border-box; }
+  html, body { height: 100%; }
+  body { font: 12px/1.4 Inter, system-ui, sans-serif; margin: 0; display: flex; flex-direction: column;
          color: var(--figma-color-text); background: var(--figma-color-bg); }
-  h3 { font-size: 11px; text-transform: uppercase; letter-spacing: .04em;
-       color: var(--figma-color-text-secondary); margin: 14px 0 6px; }
-  input { width: 100%; box-sizing: border-box; padding: 7px 8px; border-radius: 4px;
-          border: 1px solid var(--figma-color-border); background: var(--figma-color-bg);
-          color: var(--figma-color-text); font: inherit; }
-  .row { display: flex; gap: 6px; margin-top: 6px; }
-  button { flex: 1; padding: 7px; border-radius: 4px; border: 1px solid var(--figma-color-border);
-           background: var(--figma-color-bg); color: var(--figma-color-text); cursor: pointer; font: inherit; }
-  button.primary { background: var(--figma-color-bg-brand); color: var(--figma-color-text-onbrand); border: 0; }
-  button:disabled { opacity: .5; cursor: default; }
-  #info { color: var(--figma-color-text-secondary); margin-bottom: 6px; }
-  ul { list-style: none; padding: 0; margin: 0; max-height: 150px; overflow: auto; }
-  li { padding: 5px 6px; border-radius: 4px; cursor: pointer; display: flex; flex-direction: column; }
-  li:hover { background: var(--figma-color-bg-hover); }
-  li small { color: var(--figma-color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .hint { color: var(--figma-color-text-secondary); margin-top: 6px; }
+  svg { width: 16px; height: 16px; flex: none; fill: none; stroke: currentColor; stroke-width: 1.5;
+        stroke-linecap: round; stroke-linejoin: round; }
+  [hidden] { display: none !important; }
+  .muted { color: var(--figma-color-text-secondary); }
+
+  /* Tabs */
+  nav { display: flex; gap: 4px; padding: 8px 12px 0; border-bottom: 1px solid var(--figma-color-border); }
+  nav button { border: 0; background: none; color: var(--figma-color-text-secondary); font: inherit; font-weight: 500;
+               padding: 8px 6px 9px; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -1px; }
+  nav button.on { color: var(--figma-color-text); border-bottom-color: var(--figma-color-text); }
+  .count { display: inline-block; min-width: 16px; padding: 0 5px; margin-left: 4px; border-radius: 8px;
+           font-size: 10px; line-height: 16px; text-align: center; background: var(--figma-color-bg-secondary); }
+  .count.warn { background: var(--figma-color-bg-warning); color: var(--figma-color-text-onwarning); }
+
+  main { flex: 1; overflow: auto; padding: 12px; }
+
+  /* Selection card */
+  .card { display: flex; align-items: center; gap: 10px; padding: 10px; border-radius: 6px;
+          background: var(--figma-color-bg-secondary); }
+  .card .icon { width: 32px; height: 32px; border-radius: 6px; display: grid; place-items: center;
+                background: var(--figma-color-bg); color: var(--figma-color-text-secondary); flex: none; }
+  .card .icon.linked { background: var(--figma-color-bg-brand); color: var(--figma-color-text-onbrand); }
+  .card .text { flex: 1; min-width: 0; }
+  .card .name { font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .card .status { color: var(--figma-color-text-secondary); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .icon-btn { border: 0; background: none; color: var(--figma-color-text-secondary); padding: 6px; border-radius: 4px;
+              cursor: pointer; display: grid; place-items: center; }
+  .icon-btn:hover { background: var(--figma-color-bg-hover); color: var(--figma-color-text); }
+
+  .empty { text-align: center; padding: 36px 16px; color: var(--figma-color-text-secondary); }
+  .empty svg { width: 32px; height: 32px; stroke-width: 1.2; margin-bottom: 8px; }
+  .empty b { display: block; color: var(--figma-color-text); font-size: 13px; margin-bottom: 4px; }
+
+  h4 { font-size: 11px; font-weight: 600; margin: 16px 0 8px; }
+
+  /* Link type choice */
+  .choices { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+  .choice { text-align: left; padding: 10px; border-radius: 6px; cursor: pointer; font: inherit;
+            border: 1px solid var(--figma-color-border); background: var(--figma-color-bg); color: var(--figma-color-text); }
+  .choice:hover { border-color: var(--figma-color-border-strong); }
+  .choice.on { border-color: var(--figma-color-border-selected-strong); background: var(--figma-color-bg-selected);
+               box-shadow: inset 0 0 0 1px var(--figma-color-border-selected-strong); }
+  .choice svg { margin-bottom: 6px; color: var(--figma-color-icon-brand); }
+  .choice b { display: block; font-weight: 600; }
+  .choice span { color: var(--figma-color-text-secondary); font-size: 11px; }
+
+  input, select { width: 100%; padding: 8px; border-radius: 6px; font: inherit;
+                  border: 1px solid var(--figma-color-border); background: var(--figma-color-bg); color: var(--figma-color-text); }
+  input:focus, select:focus { outline: none; border-color: var(--figma-color-border-selected-strong);
+                              box-shadow: inset 0 0 0 1px var(--figma-color-border-selected-strong); }
+  .help { font-size: 11px; color: var(--figma-color-text-secondary); margin-top: 6px; }
+
+  /* Frame picker and link list */
+  .list { list-style: none; margin: 0; padding: 0; }
+  .list li { display: flex; align-items: flex-start; gap: 8px; padding: 7px 8px; border-radius: 6px; cursor: pointer; }
+  .list li:hover { background: var(--figma-color-bg-hover); }
+  .list li.on { background: var(--figma-color-bg-selected); }
+  .list li > svg { margin-top: 1px; color: var(--figma-color-icon-secondary); }
+  .list li .icon-btn { margin: -4px -4px -4px 0; padding: 4px; visibility: hidden; }
+  .list li:hover .icon-btn, .list li .icon-btn:focus { visibility: visible; }
+  .list li.on > svg { color: var(--figma-color-icon-brand); }
+  .list .body { flex: 1; min-width: 0; }
+  .list .title, .list .sub { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .list .sub { color: var(--figma-color-text-secondary); font-size: 11px; }
+  .list .issue { color: var(--figma-color-text-warning); font-size: 11px; display: flex; gap: 4px; }
+  .list .issue svg { width: 12px; height: 12px; margin-top: 2px; }
+  .frames { max-height: 168px; overflow: auto; border: 1px solid var(--figma-color-border); border-radius: 6px; padding: 4px; }
+  .tag { font-size: 10px; padding: 1px 5px; border-radius: 4px; margin-left: 4px; vertical-align: 1px;
+         background: var(--figma-color-bg-secondary); color: var(--figma-color-text-secondary); }
+
+  button.primary { width: 100%; padding: 9px; border: 0; border-radius: 6px; cursor: pointer; font: inherit; font-weight: 600;
+                   background: var(--figma-color-bg-brand); color: var(--figma-color-text-onbrand);
+                   display: flex; align-items: center; justify-content: center; gap: 6px; }
+  button.primary:hover { background: var(--figma-color-bg-brand-hover); }
+  button.primary:disabled { opacity: .4; cursor: default; }
+  #save { margin-top: 12px; }
+
+  /* Footer */
+  footer { border-top: 1px solid var(--figma-color-border); padding: 10px 12px 12px; background: var(--figma-color-bg); }
+  .banner { display: flex; gap: 6px; align-items: center; padding: 7px 8px; margin-bottom: 8px; border-radius: 6px; cursor: pointer;
+            background: var(--figma-color-bg-warning-tertiary); color: var(--figma-color-text-warning); font-size: 11px; }
+  .export-row { display: flex; gap: 6px; }
+  .export-row .icon-btn { border: 1px solid var(--figma-color-border); border-radius: 6px; padding: 0 9px; }
+  .export-row .icon-btn.on { background: var(--figma-color-bg-selected); color: var(--figma-color-text); }
+  .scope { font-size: 11px; color: var(--figma-color-text-secondary); margin-top: 6px; text-align: center; }
+  .options { display: grid; gap: 8px; padding: 10px; margin-bottom: 8px; border-radius: 6px; background: var(--figma-color-bg-secondary); }
+  .options label { display: grid; gap: 4px; font-size: 11px; color: var(--figma-color-text-secondary); }
+  .options label.check { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--figma-color-text); cursor: pointer; }
+  .options label.check input { width: auto; margin: 0; }
 </style>
 
-<div id="info">Select an element</div>
-<input id="url" placeholder="https://… / mailto:… / tel:…" />
-<div class="row">
-  <button id="set" class="primary">Set link</button>
-  <button id="remove">Remove</button>
-</div>
+<!-- Icons, referenced with <svg><use href="#i-…"/></svg> -->
+<svg style="display:none">
+  <symbol id="i-globe" viewBox="0 0 16 16"><circle cx="8" cy="8" r="6.25"/><path d="M1.75 8h12.5M8 1.75c1.8 1.9 2.6 4 2.6 6.25S9.8 12.35 8 14.25C6.2 12.35 5.4 10.25 5.4 8S6.2 3.65 8 1.75z"/></symbol>
+  <symbol id="i-page" viewBox="0 0 16 16"><path d="M4 1.75h5.5L12.5 4.75v9.5h-8.5z"/><path d="M9.25 1.75v3.25h3.25M6.5 8.5h3.5M6.5 11h3.5"/></symbol>
+  <symbol id="i-frame" viewBox="0 0 16 16"><path d="M5 1.5v13M11 1.5v13M1.5 5h13M1.5 11h13"/></symbol>
+  <symbol id="i-bolt" viewBox="0 0 16 16"><path d="M9 1.5 3.5 9H8l-1 5.5L12.5 7H8z"/></symbol>
+  <symbol id="i-cursor" viewBox="0 0 16 16"><path d="M3 2.5l10 4.2-4.3 1.6L7 12.6z"/></symbol>
+  <symbol id="i-undo" viewBox="0 0 16 16"><path d="M5.5 3 2.5 6l3 3"/><path d="M2.5 6h7a4 4 0 0 1 0 8H7"/></symbol>
+  <symbol id="i-trash" viewBox="0 0 16 16"><path d="M2.75 4.25h10.5M6.25 4.25v-2h3.5v2M4 4.25l.6 9.5h6.8l.6-9.5"/></symbol>
+  <symbol id="i-warn" viewBox="0 0 16 16"><path d="M8 1.75 15 14H1z"/><path d="M8 6.25v3.5M8 11.75v.01"/></symbol>
+  <symbol id="i-gear" viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.25"/><path d="M8 1.5v2M8 12.5v2M1.5 8h2M12.5 8h2M3.4 3.4l1.4 1.4M11.2 11.2l1.4 1.4M3.4 12.6l1.4-1.4M11.2 4.8l1.4-1.4"/></symbol>
+  <symbol id="i-download" viewBox="0 0 16 16"><path d="M8 2v8.5M4.5 7 8 10.5 11.5 7M2.5 13.5h11"/></symbol>
+  <symbol id="i-search" viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="m10.5 10.5 3.5 3.5"/></symbol>
+</svg>
 
-<h3>Links on this page</h3>
-<ul id="list"></ul>
+<nav>
+  <button id="tab-link" class="on">Link</button>
+  <button id="tab-all">All links<span id="all-count" class="count">0</span></button>
+</nav>
 
-<h3>Export</h3>
-<button id="export" class="primary" style="width:100%">Export PDF with links</button>
-<div class="hint">Exports the selected frames, or every frame on the page if nothing is selected (one PDF page per frame).</div>
+<main>
+  <!-- Tab 1: link for the selected layer -->
+  <section id="view-link">
+    <div id="no-selection" class="empty">
+      <svg><use href="#i-cursor"/></svg>
+      <b>Select a layer to make it clickable</b>
+      A button, icon, image, text – any layer inside a frame. Each frame becomes one page of the PDF.
+    </div>
+
+    <div id="editor" hidden>
+      <div class="card">
+        <div id="sel-icon" class="icon"><svg><use href="#i-cursor"/></svg></div>
+        <div class="text">
+          <div id="sel-name" class="name"></div>
+          <div id="sel-status" class="status"></div>
+        </div>
+        <button id="remove" class="icon-btn" title="Remove link"><svg><use href="#i-trash"/></svg></button>
+        <button id="restore" class="icon-btn" title="Use the prototype click as a link again"><svg><use href="#i-undo"/></svg></button>
+      </div>
+
+      <h4>When clicked in the PDF…</h4>
+      <div class="choices">
+        <button id="mode-url" class="choice on">
+          <svg><use href="#i-globe"/></svg>
+          <b>Open a website</b>
+          <span>Web address, email or phone</span>
+        </button>
+        <button id="mode-page" class="choice">
+          <svg><use href="#i-page"/></svg>
+          <b>Go to a page</b>
+          <span>Another frame in this PDF</span>
+        </button>
+      </div>
+
+      <div id="url-editor">
+        <h4>Address</h4>
+        <input id="url" placeholder="example.com" autocomplete="off" />
+        <div class="help">e.g. example.com · name@mail.com · +48 600 000 000</div>
+      </div>
+
+      <div id="page-editor" hidden>
+        <h4>Page to open</h4>
+        <ul id="frames" class="list frames"></ul>
+        <div class="help">Only pages included in the export work as targets.</div>
+      </div>
+
+      <button id="save" class="primary" disabled>Save link</button>
+    </div>
+  </section>
+
+  <!-- Tab 2: every link on the page -->
+  <section id="view-all" hidden>
+    <div id="search-wrap" style="position:relative;margin-bottom:8px">
+      <input id="filter" placeholder="Search layers or addresses" style="padding-left:28px" />
+      <svg style="position:absolute;left:8px;top:9px" class="muted"><use href="#i-search"/></svg>
+    </div>
+    <ul id="list" class="list"></ul>
+  </section>
+</main>
+
+<footer>
+  <div id="issues" class="banner" hidden><svg><use href="#i-warn"/></svg><span></span></div>
+
+  <div id="options" class="options" hidden>
+    <label class="check"><input type="checkbox" id="proto" /> Use prototype clicks as links</label>
+    <label class="check"><input type="checkbox" id="bookmarks" /> Bookmarks from frame names</label>
+    <label>Page order
+      <select id="order">
+        <option value="rows">By position – rows (left → right)</option>
+        <option value="columns">By position – columns (top → bottom)</option>
+        <option value="layers">Layers panel order</option>
+      </select>
+    </label>
+    <label>PDF title (saved in this file)<input id="title" /></label>
+    <label>Author<input id="author" placeholder="Optional" /></label>
+  </div>
+
+  <div class="export-row">
+    <button id="export" class="primary"><svg><use href="#i-download"/></svg><span>Export PDF</span></button>
+    <button id="toggle-options" class="icon-btn" title="PDF options"><svg><use href="#i-gear"/></svg></button>
+  </div>
+  <div id="scope" class="scope"></div>
+</footer>
 
 <!-- pdf-lib is inlined here by build.mjs, so the plugin needs no network access -->
 <script>!function(t,e){"object"==typeof exports&&"undefined"!=typeof module?e(exports):"function"==typeof define&&define.amd?define(["exports"],e):e((t=t||self).PDFLib={})}(this,(function(t){"use strict";
@@ -54,31 +219,261 @@
 <script>
   const $ = id => document.getElementById(id);
   const post = msg => parent.postMessage({ pluginMessage: msg }, '*');
+  const icon = name => `<svg><use href="#i-${name}"/></svg>`;
+  const el = (tag, cls, text) => {
+    const e = document.createElement(tag);
+    if (cls) e.className = cls;
+    if (text !== undefined) e.textContent = text;
+    return e;
+  };
 
-  $('set').onclick = () => post({ type: 'set-link', url: $('url').value });
+  let state = null;       // last state from the main thread
+  let mode = 'url';       // what the editor sets: 'url' or 'page'
+  let pickedFrame = '';   // frame chosen in the page picker
+  let lastSelectionKey = '';
+
+  // ---- Tabs ----
+  function showTab(name) {
+    $('tab-link').classList.toggle('on', name === 'link');
+    $('tab-all').classList.toggle('on', name === 'all');
+    $('view-link').hidden = name !== 'link';
+    $('view-all').hidden = name !== 'all';
+  }
+  $('tab-link').onclick = () => showTab('link');
+  $('tab-all').onclick = () => showTab('all');
+  $('issues').onclick = () => showTab('all');
+
+  // ---- Link editor ----
+  function setMode(m) {
+    mode = m;
+    $('mode-url').classList.toggle('on', m === 'url');
+    $('mode-page').classList.toggle('on', m === 'page');
+    $('url-editor').hidden = m !== 'url';
+    $('page-editor').hidden = m !== 'page';
+    updateSave();
+  }
+  // Focus only on a click – focusing on selection change would steal keyboard shortcuts from the canvas
+  $('mode-url').onclick = () => { setMode('url'); $('url').focus(); };
+  $('mode-page').onclick = () => setMode('page');
+
+  function updateSave() {
+    $('save').disabled = mode === 'url' ? !$('url').value.trim() : !pickedFrame;
+  }
+  $('url').oninput = updateSave;
+  $('url').onkeydown = e => { if (e.key === 'Enter' && !$('save').disabled) $('save').click(); };
+
+  $('save').onclick = () => post(mode === 'url'
+    ? { type: 'set-link', url: $('url').value }
+    : { type: 'set-link', destId: pickedFrame });
   $('remove').onclick = () => post({ type: 'remove-link' });
-  $('url').onkeydown = e => { if (e.key === 'Enter') $('set').click(); };
+  $('restore').onclick = () => post({ type: 'restore-prototype' });
+
+  const frameName = id => {
+    const f = state && state.frames.find(f => f.id === id);
+    return f ? f.name : 'a missing frame';
+  };
+
+  function renderFrames() {
+    const ul = $('frames');
+    ul.innerHTML = '';
+    if (!state.frames.length) {
+      ul.appendChild(el('li', 'muted', 'No frames on this page yet.'));
+      return;
+    }
+    for (const f of state.frames) {
+      const li = el('li', f.id === pickedFrame ? 'on' : '');
+      li.innerHTML = icon('frame');
+      const body = el('div', 'body');
+      const title = el('div', 'title', f.name);
+      if (f.id === state.selectionTopId) title.appendChild(el('span', 'tag', 'this page'));
+      body.appendChild(title);
+      li.appendChild(body);
+      li.onclick = () => { pickedFrame = f.id; renderFrames(); updateSave(); };
+      ul.appendChild(li);
+    }
+  }
+
+  function renderSelection() {
+    const s = state;
+    $('no-selection').hidden = s.selectionCount > 0;
+    $('editor').hidden = s.selectionCount === 0;
+    if (!s.selectionCount) return;
+
+    const skipped = s.currentLink === '-'; // prototype click excluded from the PDF
+    const link = skipped ? '' : s.currentLink;
+    $('sel-name').textContent = s.selectionCount === 1 ? s.selectionName : `${s.selectionCount} layers`;
+    let status = 'Not clickable yet';
+    if (s.multipleLinks) status = 'Layers have different links';
+    else if (link && link[0] === '#') status = `Goes to page “${frameName(link.slice(1))}”`;
+    else if (link) status = `Opens ${link.replace(/^(https?:\/\/|mailto:|tel:)/, '')}`;
+    else if (skipped) status = 'Prototype click – not linked in the PDF';
+    else if (s.selectionPrototype) status = `Prototype: ${s.selectionPrototype}`;
+    $('sel-status').textContent = status;
+    $('sel-icon').classList.toggle('linked', !!link);
+    $('sel-icon').innerHTML = icon(link ? (link[0] === '#' ? 'page' : 'globe') : s.selectionPrototype ? 'bolt' : 'cursor');
+    $('remove').hidden = skipped || (!link && !s.multipleLinks && !s.selectionPrototype);
+    $('remove').title = link || s.multipleLinks ? 'Remove link' : 'Don\'t make the prototype click a PDF link';
+    $('restore').hidden = !skipped;
+
+    // When the selection changes, load its link into the editor
+    const key = s.selectionIds + '|' + link;
+    if (key !== lastSelectionKey) {
+      lastSelectionKey = key;
+      if (link && link[0] === '#') {
+        pickedFrame = link.slice(1);
+        $('url').value = '';
+        setMode('page');
+      } else {
+        pickedFrame = '';
+        $('url').value = link || '';
+        if (link) setMode('url');
+      }
+    }
+    $('save').textContent = link ? 'Update link' : 'Save link';
+    renderFrames();
+    updateSave();
+  }
+
+  // ---- All links ----
+  $('filter').oninput = renderList;
+
+  function renderList() {
+    const linked = state.linked;
+    // The search box only shows up for longer lists – ignore a leftover query once it is hidden
+    $('search-wrap').hidden = linked.length < 5;
+    const q = $('search-wrap').hidden ? '' : $('filter').value.trim().toLowerCase();
+    const shown = linked.filter(l => !q || (l.name + ' ' + l.url).toLowerCase().includes(q));
+
+    const ul = $('list');
+    ul.innerHTML = '';
+    if (!shown.length) {
+      const empty = el('div', 'empty');
+      empty.innerHTML = linked.length
+        ? '<b>No matches</b>Try a different search.'
+        : `${icon('globe')}<b>No links yet</b>Select a layer and give it a link in the Link tab.`;
+      ul.appendChild(empty);
+    }
+    for (const l of shown) {
+      const li = el('li');
+      li.innerHTML = icon(l.prototype ? 'bolt' : l.url.startsWith('→') ? 'page' : 'globe');
+      const body = el('div', 'body');
+      const title = el('div', 'title', l.name);
+      if (l.prototype) title.appendChild(el('span', 'tag', 'prototype'));
+      body.appendChild(title);
+      body.appendChild(el('div', 'sub', l.url.replace(/^→ /, 'Page: ')));
+      for (const issue of l.issues) {
+        const row = el('div', 'issue');
+        row.innerHTML = icon('warn');
+        row.appendChild(el('span', '', issue));
+        body.appendChild(row);
+      }
+      li.appendChild(body);
+      const del = el('button', 'icon-btn');
+      del.title = l.prototype ? 'Don\'t make this prototype click a PDF link' : 'Remove link';
+      del.innerHTML = icon('trash');
+      del.onclick = e => { e.stopPropagation(); post({ type: 'remove-link', id: l.id }); };
+      li.appendChild(del);
+      li.onclick = () => post({ type: 'select-node', id: l.id });
+      ul.appendChild(li);
+    }
+
+    const bad = linked.filter(l => l.issues.length).length;
+    $('all-count').textContent = linked.length;
+    $('all-count').classList.toggle('warn', bad > 0);
+    $('issues').hidden = !bad;
+    $('issues').querySelector('span').textContent =
+      `${bad} link${bad > 1 ? 's' : ''} won't work in the PDF – click to see why`;
+  }
+
+  // ---- Export & options ----
+  $('toggle-options').onclick = () => {
+    $('options').hidden = !$('options').hidden;
+    $('toggle-options').classList.toggle('on', !$('options').hidden);
+  };
+
+  // Settings are stored per user by the main thread; the title is stored in the Figma file
+  function readSettings() {
+    return {
+      usePrototype: $('proto').checked,
+      bookmarks: $('bookmarks').checked,
+      order: $('order').value,
+      author: $('author').value.trim(),
+    };
+  }
+  for (const id of ['proto', 'bookmarks', 'order', 'author']) {
+    $(id).onchange = () => post({ type: 'save-settings', settings: readSettings() });
+  }
+  $('title').onchange = () => post({ type: 'save-title', title: $('title').value });
+
+  let exporting = false;
   $('export').onclick = () => {
-    $('export').disabled = true;
-    $('export').textContent = 'Exporting…';
+    exporting = true;
+    renderExport();
     post({ type: 'export' });
   };
 
-  function resetExportButton() {
-    $('export').disabled = false;
-    $('export').textContent = 'Export PDF with links';
+  function renderExport() {
+    const n = state ? state.exportCount : 0;
+    $('export').disabled = exporting || !n;
+    $('export').querySelector('span').textContent = exporting ? 'Exporting…'
+      : n ? `Export ${n} page${n > 1 ? 's' : ''} as PDF` : 'Export PDF';
+    $('scope').textContent = !n ? 'Add a frame to the page to export it'
+      : state.exportsAll ? 'All frames on this page · select frames to export only those'
+      : 'Selected frames only';
+  }
+
+  // PDF link targets must be plain ASCII: "https://café.example/menü" → "https://xn--caf-dma.example/men%C3%BC"
+  function asciiUri(url) {
+    try {
+      if (/^https?:/i.test(url)) return new URL(url).href;
+    } catch (e) { /* not a valid URL – fall back to escaping below */ }
+    return url.replace(/[^\x21-\x7E]/gu, c => encodeURIComponent(c));
+  }
+
+  // Bookmarks panel: one entry per frame, pointing at the top of its first page
+  function addOutline(out, pages, copiedPerFrame, pdfY) {
+    const { PDFName, PDFHexString } = PDFLib;
+    const ctx = out.context;
+    const rootRef = ctx.nextRef();
+    const refs = pages.map(() => ctx.nextRef());
+    pages.forEach((p, i) => {
+      const item = ctx.obj({
+        Title: PDFHexString.fromText(p.name || `Page ${i + 1}`),
+        Parent: rootRef,
+        Dest: [copiedPerFrame[i][0].ref, 'XYZ', null, pdfY(i, 0), null],
+      });
+      if (i > 0) item.set(PDFName.of('Prev'), refs[i - 1]);
+      if (i < refs.length - 1) item.set(PDFName.of('Next'), refs[i + 1]);
+      ctx.assign(refs[i], item);
+    });
+    ctx.assign(rootRef, ctx.obj({ Type: 'Outlines', First: refs[0], Last: refs[refs.length - 1], Count: refs.length }));
+    out.catalog.set(PDFName.of('Outlines'), rootRef);
+    out.catalog.set(PDFName.of('PageMode'), PDFName.of('UseOutlines')); // open with the panel visible
   }
 
   // Merge the per-frame PDFs into one document and add a link annotation for each linked node
-  async function buildPdf(pages) {
+  async function buildPdf(pages, opts) {
     const { PDFDocument, PDFString } = PDFLib;
     const out = await PDFDocument.create();
 
+    // Copy every page first, so internal links can point to pages that come later
+    const copiedPerFrame = [];
     for (const p of pages) {
       const src = await PDFDocument.load(p.bytes);
       const copied = await out.copyPages(src, src.getPageIndices());
-      for (const page of copied) {
-        out.addPage(page);
+      copied.forEach(page => out.addPage(page));
+      copiedPerFrame.push(copied);
+    }
+
+    // Figma px from the top of a frame → PDF Y coordinate on its first page
+    const pdfY = (frameIndex, y) => {
+      const page = copiedPerFrame[frameIndex][0];
+      const box = page.getMediaBox();
+      return box.y + box.height - y * (box.width / pages[frameIndex].width);
+    };
+
+    for (const [i, p] of pages.entries()) {
+      for (const page of copiedPerFrame[i]) {
         const box = page.getMediaBox();
         const scale = box.width / p.width; // in case the export is not 1px = 1pt
 
@@ -98,12 +493,25 @@
             Subtype: 'Link',
             Rect: [x1, y1, x2, y2],
             Border: [0, 0, 0], // invisible – no box drawn around the link
-            A: { Type: 'Action', S: 'URI', URI: PDFString.of(l.url) },
           });
+          if (l.url) {
+            annot.set(PDFLib.PDFName.of('A'),
+              out.context.obj({ Type: 'Action', S: 'URI', URI: PDFString.of(asciiUri(l.url)) }));
+          } else {
+            // Internal link: open the target page scrolled to the destination, keeping the zoom
+            const target = copiedPerFrame[l.dest.page][0];
+            annot.set(PDFLib.PDFName.of('Dest'),
+              out.context.obj([target.ref, 'XYZ', null, pdfY(l.dest.page, l.dest.y), null]));
+          }
           page.node.addAnnot(out.context.register(annot));
         }
       }
     }
+
+    if (opts.bookmarks && pages.length > 1) addOutline(out, pages, copiedPerFrame, pdfY);
+    out.setTitle(opts.title, { showInWindowTitleBar: true });
+    if (opts.author) out.setAuthor(opts.author);
+    out.setCreator('Figma – PDF Links');
     return out.save();
   }
 
@@ -122,35 +530,44 @@
     const msg = e.data.pluginMessage;
     if (!msg) return;
 
+    if (msg.type === 'settings') {
+      $('proto').checked = msg.settings.usePrototype;
+      $('bookmarks').checked = msg.settings.bookmarks;
+      $('order').value = msg.settings.order;
+      $('author').value = msg.settings.author || '';
+      $('title').value = msg.title || '';
+      $('title').placeholder = msg.defaultTitle || 'Untitled';
+    }
+
     if (msg.type === 'state') {
-      $('info').textContent = msg.selectionCount
-        ? `Selected: ${msg.selectionCount}` + (msg.currentLink ? ' · has link' : '')
-        : 'Select an element to add a link';
-      // Don't overwrite the field while the user is typing in it
-      if (document.activeElement !== $('url')) $('url').value = msg.currentLink || '';
-      $('list').innerHTML = msg.linked.length ? '' : '<li><small>No links yet</small></li>';
-      for (const l of msg.linked) {
-        const li = document.createElement('li');
-        li.innerHTML = '<span></span><small></small>';
-        li.children[0].textContent = l.name;
-        li.children[1].textContent = l.url;
-        li.onclick = () => post({ type: 'select-node', id: l.id });
-        $('list').appendChild(li);
-      }
+      state = msg;
+      renderSelection();
+      renderList();
+      renderExport();
     }
 
     if (msg.type === 'build-pdf') {
       try {
-        const bytes = await buildPdf(msg.pages);
-        download(bytes, msg.fileName);
+        const title = $('title').value.trim() || msg.fileName;
+        const bytes = await buildPdf(msg.pages, {
+          bookmarks: $('bookmarks').checked,
+          author: $('author').value.trim(),
+          title,
+        });
+        download(bytes, title);
         const n = msg.pages.reduce((s, p) => s + p.links.length, 0);
-        post({ type: 'notify', text: `Done: ${msg.pages.length} page(s), ${n} link(s).` });
+        const skipped = msg.skipped ? ` ${msg.skipped} link(s) skipped – their target page is not in the export.` : '';
+        post({ type: 'notify', text: `PDF ready: ${msg.pages.length} page(s), ${n} link(s).${skipped}` });
       } catch (err) {
         post({ type: 'notify', text: 'PDF error: ' + err.message, error: true });
       }
-      resetExportButton();
+      exporting = false;
+      renderExport();
     }
 
-    if (msg.type === 'export-done') resetExportButton();
+    if (msg.type === 'export-done') {
+      exporting = false;
+      renderExport();
+    }
   };
 </script>
